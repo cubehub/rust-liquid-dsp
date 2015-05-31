@@ -1,5 +1,5 @@
 [package]
-name = "liquid-dsp"
+name = "liquid_dsp"
 version = "0.1.0"
 authors = ["Andres Vahter <andres.vahter@gmail.com>"]
 
