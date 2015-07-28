@@ -47,14 +47,22 @@ impl MsresampCrcf {
     }
 
     /// execute multi-stage resampler
-    ///  _x      :   input sample array  [size: _nx x 1]
-    ///  _nx     :   input sample array size
-    ///  _y      :   output sample array [size: variable]
-    ///  _ny     :   number of samples written to _y
-    pub fn execute(&self, _x: &mut [Complex<f32>], _nx: u32, _y: &mut [Complex<f32>], _ny: *mut u32) {
-        let x = unsafe {transmute::<*mut Complex<f32>, *mut LiquidComplex32>(_x.as_mut_ptr())};
-        let y = unsafe {transmute::<*mut Complex<f32>, *mut LiquidComplex32>(_y.as_mut_ptr())};
-        unsafe{ffiliquid::msresamp_crcf_execute(self.object, x, _nx, y, _ny)};
+    ///  `input`   :   input sample array
+    ///  `output`  :   output sample array
+    ///  returns how many samples were written to `output` buffer
+    pub fn execute(&self, input: &mut [Complex<f32>], output: &mut [Complex<f32>]) -> u32 {
+        let _nx = input.len() as u32;
+        let x = unsafe {transmute::<*mut Complex<f32>, *mut LiquidComplex32>(input.as_mut_ptr())};
+        let y = unsafe {transmute::<*mut Complex<f32>, *mut LiquidComplex32>(output.as_mut_ptr())};
+        let mut output_sample_count = 0;
+
+        //  _x      :   input sample array  [size: _nx x 1]
+        //  _nx     :   input sample array size
+        //  _y      :   output sample array [size: variable]
+        //  _ny     :   number of samples written to _y
+        unsafe{ffiliquid::msresamp_crcf_execute(self.object, x, _nx, y, &mut output_sample_count)};
+
+        output_sample_count
     }
 }
 

@@ -97,15 +97,16 @@ impl FirFilterCrcf {
         unsafe{ffiliquid::firfilt_crcf_execute(self.object, y);}
     }
 
-    /// execute the filter on a block of input samples; the
-    /// input and output buffers may be the same
-    ///  _x      : pointer to input array [size: _n x 1]
-    ///  _n      : number of input, output samples
-    ///  _y      : pointer to output array [size: _n x 1]
-    pub fn execute_block(&self, _x: &mut [Complex<f32>], _n: u32, _y: &mut [Complex<f32>]) {
+    /// execute the filter on a block of input samples;
+    pub fn execute_block(&self, _x: &mut [Complex<f32>]) {
+        let _n = _x.len() as u32;
         let x = unsafe {transmute::<*mut Complex<f32>, *mut LiquidComplex32>(_x.as_mut_ptr())};
-        let y = unsafe {transmute::<*mut Complex<f32>, *mut LiquidComplex32>(_y.as_mut_ptr())};
-        unsafe{ffiliquid::firfilt_crcf_execute_block(self.object, x, _n, y);}
+
+        // the input and output buffers may be the same
+        //  _x      : pointer to input array [size: _n x 1]
+        //  _n      : number of input, output samples
+        //  _y      : pointer to output array [size: _n x 1]
+        unsafe{ffiliquid::firfilt_crcf_execute_block(self.object, x, _n, x);}
     }
 
     /// return length of filter object
