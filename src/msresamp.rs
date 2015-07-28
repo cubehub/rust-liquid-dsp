@@ -23,7 +23,9 @@
  */
 
 use ffiliquid;
-use super::{Complex32};
+use num::complex::Complex;
+use super::LiquidComplex32;
+use std::mem::transmute;
 
 pub struct MsresampCrcf {
      object: ffiliquid::msresamp_crcf,
@@ -49,8 +51,10 @@ impl MsresampCrcf {
     ///  _nx     :   input sample array size
     ///  _y      :   output sample array [size: variable]
     ///  _ny     :   number of samples written to _y
-    pub fn execute(&self, _x: &mut [Complex32], _nx: u32, _y: &mut [Complex32], _ny: *mut u32) {
-        unsafe{ffiliquid::msresamp_crcf_execute(self.object, _x.as_mut_ptr(), _nx, _y.as_mut_ptr(), _ny)};
+    pub fn execute(&self, _x: &mut [Complex<f32>], _nx: u32, _y: &mut [Complex<f32>], _ny: *mut u32) {
+        let x = unsafe {transmute::<*mut Complex<f32>, *mut LiquidComplex32>(_x.as_mut_ptr())};
+        let y = unsafe {transmute::<*mut Complex<f32>, *mut LiquidComplex32>(_y.as_mut_ptr())};
+        unsafe{ffiliquid::msresamp_crcf_execute(self.object, x, _nx, y, _ny)};
     }
 }
 

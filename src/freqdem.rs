@@ -23,7 +23,9 @@
  */
 
 use ffiliquid;
-use super::{Complex32};
+use num::complex::Complex;
+use super::LiquidComplex32;
+use std::mem::transmute;
 
 pub struct Freqdem {
      object: ffiliquid::freqdem,
@@ -41,16 +43,18 @@ impl Freqdem {
     /// demodulate sample
     ///  _r      :   received signal r(t)
     ///  _m      :   output message signal m(t)
-    pub fn demodulate(&self, _r: Complex32, _m: *mut f32) {
-        unsafe{ffiliquid::freqdem_demodulate(self.object, _r, _m)};
+    pub fn demodulate(&self, _r: Complex<f32>, _m: *mut f32) {
+        let r = unsafe {transmute::<Complex<f32>, LiquidComplex32>(_r)};
+        unsafe{ffiliquid::freqdem_demodulate(self.object, r, _m)};
     }
 
     /// demodulate block of samples
     ///  _r      :   received signal r(t) [size: _n x 1]
     ///  _n      :   number of input, output samples
     ///  _m      :   message signal m(t), [size: _n x 1]
-    pub fn demodulate_block(&self, _r: &mut [Complex32], _n: u32, _m: &mut [f32]) {
-        unsafe{ffiliquid::freqdem_demodulate_block(self.object, _r.as_mut_ptr(), _n, _m.as_mut_ptr())};
+    pub fn demodulate_block(&self, _r: &mut [Complex<f32>], _n: u32, _m: &mut [f32]) {
+        let r = unsafe {transmute::<*mut Complex<f32>, *mut LiquidComplex32>(_r.as_mut_ptr())};
+        unsafe{ffiliquid::freqdem_demodulate_block(self.object, r, _n, _m.as_mut_ptr())};
     }
 }
 

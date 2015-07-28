@@ -23,7 +23,9 @@
  */
 
 use ffiliquid;
-use super::{Complex32};
+use num::complex::Complex;
+use super::LiquidComplex32;
+use std::mem::transmute;
 
 #[allow(non_camel_case_types)]
 pub enum FirFilterType {
@@ -83,14 +85,16 @@ impl FirFilterCrcf {
 
     /// push sample into filter object's internal buffer
     ///  _x      : single input sample
-    pub fn push(&self, _x: Complex32) {
-        unsafe{ffiliquid::firfilt_crcf_push(self.object, _x)}
+    pub fn push(&self, _x: Complex<f32>) {
+        let x = unsafe {transmute::<Complex<f32>, LiquidComplex32>(_x)};
+        unsafe{ffiliquid::firfilt_crcf_push(self.object, x)}
     }
 
     /// execute the filter on internal buffer and coefficients
     ///  _y      : pointer to single output sample
-    pub fn execute(&self, _y: *mut Complex32) {
-        unsafe{ffiliquid::firfilt_crcf_execute(self.object, _y);}
+    pub fn execute(&self, _y: &mut Complex<f32>) {
+        let y = unsafe {transmute::<*mut Complex<f32>, *mut LiquidComplex32>(_y as *mut Complex<f32>)};
+        unsafe{ffiliquid::firfilt_crcf_execute(self.object, y);}
     }
 
     /// execute the filter on a block of input samples; the
@@ -98,8 +102,10 @@ impl FirFilterCrcf {
     ///  _x      : pointer to input array [size: _n x 1]
     ///  _n      : number of input, output samples
     ///  _y      : pointer to output array [size: _n x 1]
-    pub fn execute_block(&self, _x: *mut Complex32, _n: u32, _y: *mut Complex32) {
-        unsafe{ffiliquid::firfilt_crcf_execute_block(self.object, _x, _n, _y);}
+    pub fn execute_block(&self, _x: &mut [Complex<f32>], _n: u32, _y: &mut [Complex<f32>]) {
+        let x = unsafe {transmute::<*mut Complex<f32>, *mut LiquidComplex32>(_x.as_mut_ptr())};
+        let y = unsafe {transmute::<*mut Complex<f32>, *mut LiquidComplex32>(_y.as_mut_ptr())};
+        unsafe{ffiliquid::firfilt_crcf_execute_block(self.object, x, _n, y);}
     }
 
     /// return length of filter object
@@ -110,8 +116,9 @@ impl FirFilterCrcf {
     /// compute complex frequency response of filter object
     ///  _fc     : frequency to evaluate
     ///  _h      : pointer to output complex frequency response
-    pub fn freqresponse(&self, _fc: f32, _h: *mut Complex32) {
-        unsafe{ffiliquid::firfilt_crcf_freqresponse(self.object, _fc, _h);}
+    pub fn freqresponse(&self, _fc: f32, _h: &mut [Complex<f32>]) {
+        let h = unsafe {transmute::<*mut Complex<f32>, *mut LiquidComplex32>(_h.as_mut_ptr())};
+        unsafe{ffiliquid::firfilt_crcf_freqresponse(self.object, _fc, h);}
     }
 
     /// compute and return group delay of filter object

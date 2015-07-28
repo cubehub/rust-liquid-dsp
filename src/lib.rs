@@ -23,6 +23,7 @@
  */
 
 extern crate libc;
+extern crate num;
 
 #[allow(non_camel_case_types)]
 #[allow(non_upper_case_globals)]
@@ -31,5 +32,5 @@ pub mod firfilt;
 pub mod msresamp;
 pub mod freqdem;
 
-pub type Complex32 = ffiliquid::liquid_float_complex;
-pub type Complex64 = ffiliquid::liquid_double_complex;
+pub type LiquidComplex32 = ffiliquid::liquid_float_complex;
+pub type LiquidComplex64 = ffiliquid::liquid_double_complex;
