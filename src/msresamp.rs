@@ -29,40 +29,43 @@ use std::mem::transmute;
 
 pub struct MsresampCrcf {
      object: ffiliquid::msresamp_crcf,
+     resample_rate: f32,
 }
 
 impl MsresampCrcf {
 
-    /// create multi-stage arbitrary resampler
-    ///  _r      :   resampling rate [output/input]
-    ///  _as     :   stop-band attenuation [dB]
-    pub fn new(_r: f32, _as: f32) -> MsresampCrcf {
-        let resampler: ffiliquid::msresamp_crcf = unsafe{ffiliquid::msresamp_crcf_create(_r, _as)};
-        MsresampCrcf{object: resampler}
+    /// Creates multi-stage arbitrary resampler where `resample_rate` is resampling rate expressed as (output/input).
+    /// Filter stop-band `attenuation` is in dB.
+    pub fn new(resample_rate: f32, attenuation: f32) -> MsresampCrcf {
+        let resampler: ffiliquid::msresamp_crcf = unsafe{ffiliquid::msresamp_crcf_create(resample_rate, attenuation)};
+        MsresampCrcf{object: resampler,
+                     resample_rate: resample_rate
+        }
     }
 
-    /// get filter delay (output samples)
+    /// Get filter delay (output samples).
     pub fn get_delay(&self) -> f32 {
         unsafe{ffiliquid::msresamp_crcf_get_delay(self.object)}
     }
 
-    /// execute multi-stage resampler
-    ///  `input`   :   input sample array
-    ///  `output`  :   output sample array
-    ///  returns how many samples were written to `output` buffer
-    pub fn execute(&self, input: &mut [Complex<f32>], output: &mut [Complex<f32>]) -> u32 {
+    /// Creates Vec<Complex<f32>> that contains resampled original `input` signal.
+    pub fn resample(&self, input: &mut [Complex<f32>]) -> Vec<Complex<f32>> {
+        let output_len = (2f32 * input.len() as f32 * self.resample_rate) as u32;
+        let mut output = vec![Complex::<f32>::new(0.0f32, 0.0f32); output_len as usize];
+
         let _nx = input.len() as u32;
         let x = unsafe {transmute::<*mut Complex<f32>, *mut LiquidComplex32>(input.as_mut_ptr())};
         let y = unsafe {transmute::<*mut Complex<f32>, *mut LiquidComplex32>(output.as_mut_ptr())};
         let mut output_sample_count = 0;
 
+        // execute multi-stage resampler
         //  _x      :   input sample array  [size: _nx x 1]
         //  _nx     :   input sample array size
         //  _y      :   output sample array [size: variable]
         //  _ny     :   number of samples written to _y
-        unsafe{ffiliquid::msresamp_crcf_execute(self.object, x, _nx, y, &mut output_sample_count)};
-
-        output_sample_count
+        unsafe {ffiliquid::msresamp_crcf_execute(self.object, x, _nx, y, &mut output_sample_count)};
+        output.truncate(output_sample_count as usize);
+        output
     }
 }
 
